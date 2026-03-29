@@ -3,16 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web programozás-1 Beadandó</title>
+    <title>Web programozás-1 Beadandó - Axios CRUD</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4; }
         header { background: #333; color: #fff; padding: 1rem; text-align: center; }
         nav { background: #444; padding: 0.5rem; text-align: center; }
         nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: bold; }
         nav a:hover { color: #ffca28; }
-        main { padding: 20px; max-width: 800px; margin: auto; }
+        main { padding: 20px; max-width: 1200px; margin: auto; margin-bottom: 80px; }
         footer { background: #333; color: #fff; text-align: center; padding: 1rem; position: fixed; bottom: 0; width: 100%; }
-        .project-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+        
+        .project-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.85rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #444; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        
+        .form-container { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #eee; }
+        .form-container input { margin: 5px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px; }
+        .btn { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-del { background: #dc3545; color: white; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -27,25 +43,132 @@
         <a href="react.html">React CRUD</a>
         <a href="react/dist/spa.html">SPA</a>
         <a href="fetchapi.html">Fetch API</a>
-        <a href="axios.html">Axios</a>
+        <a href="axios.html" style="color: #ffca28;">Axios</a>
         <a href="oojs.html">OOJS</a>
     </nav>
 
-    <main>
-        <section class="project-box">
-            <h2>Az alkalmazás bemutatása</h2>
-            <p>Ez a webalkalmazás a Web-programozás 1 kurzus keretein belül készült projektmunka. 
-               A célja a modern webes technológiák (JavaScript, React, API kezelés) bemutatása 
-               egy komplex, több modulból álló rendszeren keresztül.</p>
-            
-            <p>A menüpontok segítségével elérhetőek a különböző technológiákkal megvalósított 
-               adatkezelő (CRUD) alkalmazások és játékok.</p>
-        </section>
-    </main>
+    <div id="root"></div>
 
     <footer>
         <p>Készítők: <strong>Kovács Márk István (EBOJED)</strong> & <strong>Dragos Balázs (B4KP1O)</strong></p>
     </footer>
 
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function LaptopManager() {
+            const [laptopok, setLaptopok] = useState([]);
+            const [ujGep, setUjGep] = useState({ 
+                Gyarto: '', Tipus: '', Kijelzo: '', Memoria: '', 
+                Merevlemez: '', Videovezerlo: '', Ar: '' 
+            });
+
+            const fetchAdatok = () => {
+                axios.get('api.php')
+                    .then(response => {
+                        // Ellenőrizzük, hogy tömb jött-e vissza
+                        if(Array.isArray(response.data)) {
+                            setLaptopok(response.data);
+                        } else {
+                            console.error("Nem tömb formátumú adat érkezett:", response.data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Hiba az adatok lekérésekor:", error);
+                    });
+            };
+
+            useEffect(() => { fetchAdatok(); }, []);
+
+            const hozzaad = (e) => {
+                e.preventDefault();
+                if(!ujGep.Gyarto || !ujGep.Tipus) {
+                    alert("A gyártó és típus kitöltése kötelező!");
+                    return;
+                }
+                
+                const params = new URLSearchParams();
+                Object.keys(ujGep).forEach(key => params.append(key, ujGep[key]));
+
+                axios.post('api.php', params)
+                    .then(() => {
+                        fetchAdatok();
+                        setUjGep({ 
+                            Gyarto: '', Tipus: '', Kijelzo: '', Memoria: '', 
+                            Merevlemez: '', Videovezerlo: '', Ar: '' 
+                        });
+                    })
+                    .catch(error => alert("Hiba a mentés során!"));
+            };
+
+            const torol = (id) => {
+                if(confirm("Biztosan törlöd ezt a gépet?")) {
+                    axios.delete(`api.php?id=${id}`)
+                        .then(() => fetchAdatok())
+                        .catch(error => alert("Hiba a törlés során!"));
+                }
+            };
+
+            return (
+                <main>
+                    <section className="project-box">
+                        <h2>Laptop Adatbázis Kezelő (Axios CRUD)</h2>
+                        
+                        <div className="form-container">
+                            <h3>Új laptop felvétele</h3>
+                            <form onSubmit={hozzaad}>
+                                <input type="text" placeholder="Gyártó" value={ujGep.Gyarto} onChange={e => setUjGep({...ujGep, Gyarto: e.target.value})} />
+                                <input type="text" placeholder="Típus" value={ujGep.Tipus} onChange={e => setUjGep({...ujGep, Tipus: e.target.value})} />
+                                <input type="text" placeholder="Kijelző" value={ujGep.Kijelzo} onChange={e => setUjGep({...ujGep, Kijelzo: e.target.value})} />
+                                <input type="number" placeholder="RAM (MB)" value={ujGep.Memoria} onChange={e => setUjGep({...ujGep, Memoria: e.target.value})} />
+                                <input type="number" placeholder="HDD (GB)" value={ujGep.Merevlemez} onChange={e => setUjGep({...ujGep, Merevlemez: e.target.value})} />
+                                <input type="text" placeholder="Videóvezérlő" value={ujGep.Videovezerlo} onChange={e => setUjGep({...ujGep, Videovezerlo: e.target.value})} />
+                                <input type="number" placeholder="Ár (Ft)" value={ujGep.Ar} onChange={e => setUjGep({...ujGep, Ar: e.target.value})} />
+                                <button type="submit" className="btn btn-add">Hozzáadás</button>
+                            </form>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Gyártó</th>
+                                    <th>Típus</th>
+                                    <th>Kijelző</th>
+                                    <th>RAM (MB)</th>
+                                    <th>HDD (GB)</th>
+                                    <th>Videóvezérlő</th>
+                                    <th>Ár</th>
+                                    <th>Műveletek</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {laptopok.length > 0 ? (
+                                    laptopok.map((gep, index) => (
+                                        <tr key={gep.id || index}>
+                                            <td>{gep.Gyarto}</td>
+                                            <td>{gep.Tipus}</td>
+                                            <td>{gep.Kijelzo}</td>
+                                            <td>{gep.Memoria}</td>
+                                            <td>{gep.Merevlemez}</td>
+                                            <td>{gep.Videovezerlo}</td>
+                                            <td>{gep.Ar ? Number(gep.Ar).toLocaleString() : 0} Ft</td>
+                                            <td>
+                                                <button className="btn btn-del" onClick={() => torol(gep.id)}>Törlés</button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan="8" style={{textAlign:'center'}}>Adatok betöltése vagy a tábla üres...</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </section>
+                </main>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LaptopManager />);
+    </script>
 </body>
 </html>
