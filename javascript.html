@@ -10,9 +10,18 @@
         nav { background: #444; padding: 0.5rem; text-align: center; }
         nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: bold; }
         nav a:hover { color: #ffca28; }
-        main { padding: 20px; max-width: 800px; margin: auto; }
+        main { padding: 20px; max-width: 800px; margin: auto; margin-bottom: 100px; }
         footer { background: #333; color: #fff; text-align: center; padding: 1rem; position: fixed; bottom: 0; width: 100%; }
         .project-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+        .form-group { margin-bottom: 15px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; width: 200px; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; }
+        .btn-add { background-color: #28a745; color: white; }
+        .btn-edit { background: #ffca28; margin-right: 5px; }
+        .btn-del { background: #ff4444; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background: #eee; }
     </style>
 </head>
 <body>
@@ -33,13 +42,25 @@
 
     <main>
         <section class="project-box">
-            <h2>Az alkalmazás bemutatása</h2>
-            <p>Ez a webalkalmazás a Web-programozás 1 kurzus keretein belül készült projektmunka. 
-               A célja a modern webes technológiák (JavaScript, React, API kezelés) bemutatása 
-               egy komplex, több modulból álló rendszeren keresztül.</p>
+            <h2>Processzor Kezelés</h2>
             
-            <p>A menüpontok segítségével elérhetőek a különböző technológiákkal megvalósított 
-               adatkezelő (CRUD) alkalmazások és játékok.</p>
+            <div class="form-group">
+                <input type="hidden" id="editIndex">
+                <input type="text" id="procGyarto" placeholder="Gyártó">
+                <input type="text" id="procTipus" placeholder="Típus">
+                <button onclick="saveItem()" id="saveBtn" class="btn-add">Hozzáadás</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Gyártó</th>
+                        <th>Típus</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </section>
     </main>
 
@@ -47,5 +68,86 @@
         <p>Készítők: <strong>Kovács Márk István (EBOJED)</strong> & <strong>Dragos Balázs (B4KP1O)</strong></p>
     </footer>
 
+    <script>
+        let dataArray = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch('processzor.txt');
+                if (!response.ok) throw new Error();
+                const text = await response.text();
+                const lines = text.split(/\r?\n/);
+                
+                dataArray = [];
+                for (let i = 1; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if (line === "") continue;
+
+                    let cols = line.split('\t');
+                    if (cols.length < 3) cols = line.split(/\s+/);
+                    
+                    if (cols.length >= 3) {
+                        dataArray.push({
+                            gyarto: cols[1].trim(),
+                            tipus: cols.slice(2).join(" ").trim()
+                        });
+                    }
+                }
+                renderTable();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            dataArray.forEach((item, index) => {
+                const row = `<tr>
+                    <td>${item.gyarto}</td>
+                    <td>${item.tipus}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editItem(${index})">Szerkesztés</button>
+                        <button class="btn-del" onclick="deleteItem(${index})">Törlés</button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function saveItem() {
+            const gyarto = document.getElementById('procGyarto').value;
+            const tipus = document.getElementById('procTipus').value;
+            const editIndex = document.getElementById('editIndex').value;
+            if (!gyarto || !tipus) return;
+            if (editIndex === "") {
+                dataArray.push({ gyarto, tipus });
+            } else {
+                dataArray[editIndex] = { gyarto, tipus };
+                document.getElementById('editIndex').value = "";
+                document.getElementById('saveBtn').innerText = "Hozzáadás";
+            }
+            document.getElementById('procGyarto').value = "";
+            document.getElementById('procTipus').value = "";
+            renderTable();
+        }
+
+        function deleteItem(index) {
+            if(confirm("Biztosan törli?")) {
+                dataArray.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        function editItem(index) {
+            document.getElementById('procGyarto').value = dataArray[index].gyarto;
+            document.getElementById('procTipus').value = dataArray[index].tipus;
+            document.getElementById('editIndex').value = index;
+            document.getElementById('saveBtn').innerText = "Mentés";
+            window.scrollTo(0, 0);
+        }
+
+        window.onload = loadData;
+    </script>
 </body>
 </html>
