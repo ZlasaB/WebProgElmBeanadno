@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>React SPA - Beadandó</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #eee; }
+        nav { background: #333; padding: 10px; text-align: center; }
+        nav button { margin: 0 10px; padding: 8px 15px; cursor: pointer; }
+        main { background: white; max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 8px; min-height: 200px; }
+        .app-box { border: 1px solid #ddd; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Ide jönnek a függvények (ugyanazok, amik az App.jsx-ben vannak)
+        function CounterApp() {
+            const [count, setCount] = useState(0);
+            return (
+                <div className="app-box">
+                    <h3>Számláló</h3>
+                    <p>Érték: <strong>{count}</strong></p>
+                    <button onClick={() => setCount(count + 1)}>Növel</button>
+                    <button onClick={() => setCount(count - 1)}>Csökkent</button>
+                </div>
+            );
+        }
+
+        function TodoApp() {
+            const [todos, setTodos] = useState([]);
+            const [text, setText] = useState("");
+            return (
+                <div className="app-box">
+                    <h3>Teendők</h3>
+                    <input value={text} onChange={(e) => setText(e.target.value)} />
+                    <button onClick={() => { if(text) {setTodos([...todos, text]); setText("");} }}>Hozzáad</button>
+                    <ul>{todos.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                </div>
+            );
+        }
+
+        function App() {
+            const [page, setPage] = useState('home');
+            return (
+                <div>
+                    <nav>
+                        <button onClick={() => window.location.href = '../../index.html'}>Főoldal</button>
+                        <button onClick={() => setPage('counter')}>Számláló</button>
+                        <button onClick={() => setPage('todo')}>Teendők</button>
+                    </nav>
+                    <main>
+                        {page === 'home' && <h2>Válassz egy alkalmazást!</h2>}
+                        {page === 'counter' && <CounterApp />}
+                        {page === 'todo' && <TodoApp />}
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
