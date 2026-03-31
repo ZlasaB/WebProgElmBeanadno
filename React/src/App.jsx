@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// 1. Al-komponens: Számláló
+
 function CounterApp() {
   const [count, setCount] = useState(0);
   return (
@@ -13,7 +13,7 @@ function CounterApp() {
   );
 }
 
-// 2. Al-komponens: Teendők
+
 function TodoApp() {
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
@@ -37,7 +37,7 @@ function TodoApp() {
   );
 }
 
-// Fő komponens (SPA logika)
+
 export default function App() {
   const [page, setPage] = useState('home');
 
