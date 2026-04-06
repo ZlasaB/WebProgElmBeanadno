@@ -2,50 +2,137 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web programozás-1 Beadandó</title>
+    <title>OOJS - Notebook Adatbázis</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
-        header { background: #333; color: #fff; padding: 1rem; text-align: center; }
-        nav { background: #444; padding: 0.5rem; text-align: center; }
-        nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: bold; }
-        nav a:hover { color: #ffca28; }
-        main { padding: 20px; max-width: 800px; margin: auto; }
-        footer { background: #333; color: #fff; text-align: center; padding: 1rem; position: fixed; bottom: 0; width: 100%; }
-        .project-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; text-align: center; }
+        #display-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { 
+            background: white; border-radius: 12px; padding: 20px; text-align: left;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-top: 6px solid #007bff;
+        }
+        .card h3 { margin-top: 0; color: #007bff; font-size: 1.1em; }
+        .price { font-weight: bold; color: #d9534f; font-size: 1.2em; }
+        .spec { font-size: 0.85em; color: #666; margin: 5px 0; }
+        button { 
+            padding: 12px 30px; background: #007bff; color: white; border: none; 
+            border-radius: 25px; cursor: pointer; font-size: 16px; transition: 0.3s;
+        }
+        button:hover { background: #0056b3; transform: scale(1.05); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Web programozás-1 Előadás Házi feladat</h1>
-    </header>
+<div class="container">
+    <h1>ReNew Kft. - Notebook Készlet (OOJS)</h1>
+    <button onclick="location.href='index.html'" style="background: #6c757d; margin-right: 10px;">Vissza a főoldalra</button>
+    <button id="loadBtn">Következő Notebook Megjelenítése</button>
+    <div id="display-area"></div>
+</div>
 
-    <nav>
-        <a href="index.html">Főoldal</a>
-        <a href="javascript.html">JS CRUD</a>
-        <a href="react.html">React CRUD</a>
-        <a href="react/dist/spa.html">SPA</a>
-        <a href="fetchapi.html">Fetch API</a>
-        <a href="axios.html">Axios</a>
-        <a href="oojs.html">OOJS</a>
-    </nav>
+<script>
+    class Termek {
+        constructor(gyarto, ar) {
+            this.gyarto = gyarto;
+            this.ar = ar;
+        }
+    }
 
-    <main>
-        <section class="project-box">
-            <h2>Az alkalmazás bemutatása</h2>
-            <p>Ez a webalkalmazás a Web-programozás 1 kurzus keretein belül készült projektmunka. 
-               A célja a modern webes technológiák (JavaScript, React, API kezelés) bemutatása 
-               egy komplex, több modulból álló rendszeren keresztül.</p>
-            
-            <p>A menüpontok segítségével elérhetőek a különböző technológiákkal megvalósított 
-               adatkezelő (CRUD) alkalmazások és játékok.</p>
-        </section>
-    </main>
+    class Notebook extends Termek {
+        constructor(gyarto, tipus, kijelzo, memoria, hdd, video, ar, prociNev, osNev) {
+            super(gyarto, ar);
+            this.tipus = tipus;
+            this.kijelzo = kijelzo;
+            this.memoria = memoria;
+            this.hdd = hdd;
+            this.video = video;
+            this.prociNev = prociNev;
+            this.osNev = osNev;
+        }
 
-    <footer>
-        <p>Készítők: <strong>Kovács Márk István (EBOJED)</strong> & <strong>Dragos Balázs (B4KP1O)</strong></p>
-    </footer>
+        render() {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <h3>${this.gyarto} ${this.tipus}</h3>
+                <p class="price">${Number(this.ar).toLocaleString()} Ft</p>
+                <div class="spec"><strong>Kijelző:</strong> ${this.kijelzo}"</div>
+                <div class="spec"><strong>Processzor:</strong> ${this.prociNev}</div>
+                <div class="spec"><strong>Memória:</strong> ${this.memoria} MB</div>
+                <div class="spec"><strong>Háttértár:</strong> ${this.hdd} GB</div>
+                <div class="spec"><strong>Videovezérlő:</strong> ${this.video}</div>
+                <div class="spec"><strong>OP Rendszer:</strong> ${this.osNev}</div>
+            `;
+            document.getElementById('display-area').prepend(div);
+        }
+    }
+
+    let notebookok = [];
+    let procik = {};
+    let oprendszerek = {};
+    let index = 0;
+
+    async function adatokBetoltese() {
+        try {
+            // Processzorok beolvasása
+            const prociRes = await fetch('1-03-Notebook-3 táblás/processzor.txt');
+            const prociTxt = await prociRes.text();
+            prociTxt.split('\n').slice(1).forEach(sor => {
+                const [id, gyarto, tipus] = sor.split('\t');
+                if(id) procik[id] = `${gyarto} ${tipus}`.trim();
+            });
+
+            // Oprendszerek beolvasása
+            const osRes = await fetch('1-03-Notebook-3 táblás/oprendszer.txt');
+            const osTxt = await osRes.text();
+            osTxt.split('\n').slice(1).forEach(sor => {
+                const [id, nev] = sor.split('\t');
+                if(id) oprendszerek[id] = nev.trim();
+            });
+
+            // Gépek beolvasása
+            const gepRes = await fetch('1-03-Notebook-3 táblás/gep.txt');
+            const gepTxt = await gepRes.text();
+            const gepSorok = gepTxt.split('\n').slice(1);
+
+            gepSorok.forEach(sor => {
+                const d = sor.split('\t');
+                if (d.length > 5) {
+                    const ujGep = new Notebook(
+                        d[0], // gyarto
+                        d[1], // tipus
+                        d[2], // kijelzo
+                        d[3], // memoria
+                        d[4], // hdd
+                        d[5], // video
+                        d[6], // ar
+                        procik[d[7]] || "Ismeretlen CPU", // processzorid alapján név
+                        oprendszerek[d[8]] || "Nincs adat" // oprendszerid alapján név
+                    );
+                    notebookok.push(ujGep);
+                }
+            });
+            console.log("Minden adat betöltve!");
+        } catch (error) {
+            console.error("Hiba történt a fájlok beolvasásakor:", error);
+            alert("Hiba: A fájlokat (gep.txt, stb.) a HTML mellé kell tenni!");
+        }
+    }
+
+    // Gomb
+    document.getElementById('loadBtn').addEventListener('click', () => {
+        if (index < notebookok.length) {
+            notebookok[index].render();
+            index++;
+        } else {
+            document.getElementById('loadBtn').disabled = true;
+            document.getElementById('loadBtn').innerText = "Nincs több gép";
+        }
+    });
+
+    adatokBetoltese();
+</script>
 
 </body>
 </html>
