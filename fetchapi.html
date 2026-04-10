@@ -2,50 +2,112 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web programozás-1 Beadandó</title>
+    <title>Notebook - Fetch API CRUD</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
-        header { background: #333; color: #fff; padding: 1rem; text-align: center; }
-        nav { background: #444; padding: 0.5rem; text-align: center; }
-        nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: bold; }
-        nav a:hover { color: #ffca28; }
-        main { padding: 20px; max-width: 800px; margin: auto; }
-        footer { background: #333; color: #fff; text-align: center; padding: 1rem; position: fixed; bottom: 0; width: 100%; }
-        .project-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .form-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #e9ecef; padding: 15px; border-radius: 5px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; transition: 0.3s; }
+        .btn-add { background: #28a745; color: white; grid-column: span 3; font-weight: bold; }
+        .btn-add:hover { background: #218838; }
+        .btn-home { background: #6c757d; color: white; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; }
+        th { background: #007bff; color: white; }
+        tr:nth-child(even) { background: #f8f9fa; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Web programozás-1 Előadás Házi feladat</h1>
-    </header>
+<div class="container">
+    <button class="btn-home" onclick="location.href='index.html'">← Vissza a főoldalra</button>
+    
+    <h2>Új Notebook rögzítése (Fetch POST)</h2>
+    <div class="form-group">
+        <input type="text" id="gyarto" placeholder="Gyártó (pl. Dell)">
+        <input type="text" id="tipus" placeholder="Típus">
+        <input type="text" id="kijelzo" placeholder="Kijelző (pl. 15.6)">
+        <input type="number" id="memoria" placeholder="Memória (MB)">
+        <input type="number" id="merevlemez" placeholder="Merevlemez (GB)">
+        <input type="text" id="video" placeholder="Videóvezérlő">
+        <input type="number" id="ar" placeholder="Ár (Ft)">
+        <button class="btn-add" id="saveBtn">Gép mentése az adatbázisba</button>
+    </div>
 
-    <nav>
-        <a href="index.html">Főoldal</a>
-        <a href="javascript.html">JS CRUD</a>
-        <a href="react.html">React CRUD</a>
-        <a href="react/dist/spa.html">SPA</a>
-        <a href="fetchapi.html">Fetch API</a>
-        <a href="axios.html">Axios</a>
-        <a href="oojs.html">OOJS</a>
-    </nav>
+    <h2>Aktuális készlet (Fetch GET)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Gyártó</th>
+                <th>Típus</th>
+                <th>Kijelző</th>
+                <th>RAM</th>
+                <th>HDD</th>
+                <th>Ár</th>
+            </tr>
+        </thead>
+        <tbody id="gepTable">
+            </tbody>
+    </table>
+</div>
 
-    <main>
-        <section class="project-box">
-            <h2>Az alkalmazás bemutatása</h2>
-            <p>Ez a webalkalmazás a Web-programozás 1 kurzus keretein belül készült projektmunka. 
-               A célja a modern webes technológiák (JavaScript, React, API kezelés) bemutatása 
-               egy komplex, több modulból álló rendszeren keresztül.</p>
-            
-            <p>A menüpontok segítségével elérhetőek a különböző technológiákkal megvalósított 
-               adatkezelő (CRUD) alkalmazások és játékok.</p>
-        </section>
-    </main>
+<script>
+    const API_URL = 'api.php';
 
-    <footer>
-        <p>Készítők: <strong>Kovács Márk István (EBOJED)</strong> & <strong>Dragos Balázs (B4KP1O)</strong></p>
-    </footer>
+    // 1. LISTÁZÁS (GET)
+    function listazas() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(adatok => {
+                const tbody = document.getElementById('gepTable');
+                tbody.innerHTML = '';
+                adatok.forEach(gep => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${gep.Gyarto}</td>
+                            <td>${gep.Tipus}</td>
+                            <td>${gep.Kijelzo}"</td>
+                            <td>${gep.Memoria} MB</td>
+                            <td>${gep.Merevlemez} GB</td>
+                            <td>${Number(gep.Ar).toLocaleString()} Ft</td>
+                        </tr>
+                    `;
+                });
+            })
+            .catch(err => console.error("Hiba a lekérésnél:", err));
+    }
+
+    // 2. MENTÉS (POST)
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        // FormData-t használunk, mert az api.php a $_POST-ból várja az adatokat
+        const formData = new FormData();
+        formData.append('Gyarto', document.getElementById('gyarto').value);
+        formData.append('Tipus', document.getElementById('tipus').value);
+        formData.append('Kijelzo', document.getElementById('kijelzo').value);
+        formData.append('Memoria', document.getElementById('memoria').value);
+        formData.append('Merevlemez', document.getElementById('merevlemez').value);
+        formData.append('Videovezerlo', document.getElementById('video').value);
+        formData.append('Ar', document.getElementById('ar').value);
+
+        fetch(API_URL, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(valasz => {
+            alert("Szerver válasza: " + valasz.status);
+            listazas(); // Táblázat frissítése
+            // Mezők ürítése
+            document.querySelectorAll('input').forEach(i => i.value = '');
+        })
+        .catch(err => console.error("Hiba a mentésnél:", err));
+    });
+
+    // Betöltéskor azonnal listázzunk
+    listazas();
+</script>
 
 </body>
 </html>
